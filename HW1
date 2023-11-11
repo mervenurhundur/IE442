@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 url = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
 
 # API key
-api_key = 'AIzaSyACpge9Vwwzz-IUTbwlbi7kVyGKbBnv9QI'
+api_key = ''
 
 # Request data
 params = {
