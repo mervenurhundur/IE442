@@ -1,0 +1,54 @@
+import requests
+import matplotlib.pyplot as plt
+
+# Google Places API endpoint example
+url = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
+
+# API key
+api_key = 'AIzaSyACpge9Vwwzz-IUTbwlbi7kVyGKbBnv9QI'
+
+# Request data
+params = {
+    "query": "Vegan Food in Turkey",
+    "key": api_key
+}
+
+# Send request
+response = requests.get(url, params=params)
+
+# Process response
+if response.status_code == 200:
+    data = response.json()
+
+    # Parse the JSON data into objects
+    results = data.get("results", [])
+    places = []
+
+    for result in results:
+        place_name = result.get("name", "Unknown")
+        place_address = result.get("formatted_address", "Unknown")
+        place_rating = result.get("rating", "Not rated")
+        places.append({
+            "name": place_name,
+            "address": place_address,
+            "rating": place_rating
+        })
+
+    # Print the parsed data
+    for place in places:
+        print(f"Name: {place['name']}, Address: {place['address']}, Rating: {place['rating']}")
+
+    # Plot the data
+    names = [place['name'] for place in places]
+    ratings = [place['rating'] for place in places]
+
+    plt.bar(names, ratings)
+    plt.xlabel('Place Name')
+    plt.ylabel('Rating')
+    plt.title('Spicy Vegetarian Food Places and Ratings')
+    plt.xticks(rotation=45, ha='right')
+
+    plt.show()
+
+else:
+    print('Request failed. Error code:', response.status_code)
