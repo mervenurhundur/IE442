@@ -1,39 +1,49 @@
-import sqlite3
 import streamlit as st
-import pandas as pd
+import openai
 
-# SQLite veritabanına bağlan
-conn = sqlite3.connect(r'C:\Users\ASUS\Desktop\442\spotify.db')
-cursor = conn.cursor()
+import openai
+from dotenv import load_dotenv
+import os
 
-# Kullanıcıdan sadece 1 ile 6 arasındaki periyotlar için Gross Requirement değerlerini al
-gross_requirements = {}
-num_periods = 6  # Toplam periyot sayısı (örneğin, 6 hafta)
+# .env dosyasını yükleyin
+load_dotenv(dotenv_path="apikey.env")  # apikey.env dosyasını belirtin
 
-for i in range(1, num_periods + 1):
-    gross_requirement = st.number_input(f'Gross Requirement for Period {i}', min_value=0, max_value=None, value=0)
-    gross_requirements[i] = gross_requirement
+# API anahtarınızı çekin
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# Gross Requirement değerlerini MRP tablosuna ekleyerek diğer sütunları güncelle
-for i, gross_requirement in gross_requirements.items():
-    if i != 0:  # Periyot 0'a değer girilmesini engellemek için kontrol
-        cursor.execute(f"UPDATE MRP SET GrossRequirements = {gross_requirement} WHERE PartID = 1 AND PeriodID = {i}")
-        # Diğer sütunları güncellemek için gerekli sorguları ekleyin
+# API anahtarını ayarlayın
+openai.api_key = openai_api_key
 
-# Veritabanındaki değişiklikleri kaydet
-conn.commit()
 
-# MRP tablosundan verileri çek
-cursor.execute("SELECT * FROM MRP WHERE PartID = 1")
-mrp_data = cursor.fetchall()
+def generate_campaign_text(target_audience, campaign_topic, word_count, emoji_usage, kampanya_sayısı):
+    emoji_prompt = "kullanılsın" if emoji_usage == "Kullanılsın" else "kullanılmasın"
+    prompt = f"{target_audience} hedef kitlesine yönelik, {campaign_topic} konusunu merkeze alan {word_count} karakter sayısına ve harekete geçirici sloganlara ve {target_audience} kitlesine uygun bir dile sahip {kampanya_sayısı} tane farklı kampanya metni yazın. Bu kampanyada emojiler {emoji_prompt}."
+    output = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return output['choices'][0]['message']['content']
 
-# Sütun başlıklarını ekleyerek bir DataFrame oluştur
-columns = [description[0] for description in cursor.description]
-mrp_df = pd.DataFrame(mrp_data, columns=columns)
+def main():
+    st.title("Kampanya Metni Oluşturucu")
+    st.write("Bu uygulama, hedef kitle, kampanya konusu ve kelime sayısı temelinde bir kampanya metni oluşturur.")
 
-# Streamlit'te verileri görselleştir
-st.title('MRP Table')
-st.dataframe(mrp_df)
+    target_audience = st.text_input("Hedef kitlenizi girin:")
+    campaign_topic = st.text_input("Kampanya konusunu girin:")
+    word_count = st.number_input("İstenen karakter sayısını girin:", min_value=0, max_value=500, step=1, value=200)
+    emoji_usage = st.selectbox("Emojileri Kullanımı:", options=["Kullanılsın", "Kullanılmasın"])
+    kampanya_sayısı = st.number_input("Üretilmesini istediğiniz kampanya metni sayısını girin:", min_value=0, max_value=10, step=1, value=2)
+    
+    if st.button("Kampanya Metnini Oluştur"):
+        if target_audience or campaign_topic :
+            campaign_text = generate_campaign_text(target_audience, campaign_topic, word_count, emoji_usage, kampanya_sayısı)
+            st.write(campaign_text)
+    if st.button("Tekrar Dene"):
+        if target_audience or campaign_topic :
+            campaign_text = generate_campaign_text(target_audience, campaign_topic, word_count, emoji_usage, kampanya_sayısı)
+            st.write(campaign_text)
 
-# Veritabanı bağlantısını kapat
-conn.close()
+if _name_ == "_main_":
+    main()
