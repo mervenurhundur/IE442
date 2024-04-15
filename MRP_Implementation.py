@@ -45,5 +45,5 @@ def main():
             campaign_text = generate_campaign_text(target_audience, campaign_topic, word_count, emoji_usage, kampanya_sayısı)
             st.write(campaign_text)
 
-if __name__ == "_main_":
+if __name__ != "_main_":
     main()
